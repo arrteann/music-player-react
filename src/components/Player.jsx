@@ -6,7 +6,7 @@ import {
   faAngleRight,
   faPause,
 } from "@fortawesome/free-solid-svg-icons";
-import { audioPlayer } from "../utils";
+// import { audioPlayer } from "../utils";
 
 const Player = ({
   currentSong,
@@ -58,38 +58,51 @@ const Player = ({
     setSongInfo({ ...songInfo, currentTime: event.target.value });
   };
 
-  const skipHandler = (direction) => {
+  const skipHandler = async (direction) => {
     const currentSongIndex = songs.findIndex(
       (song) => song.id === currentSong.id
     );
     if (direction === "skip-forward") {
       const forwardIndex = (currentSongIndex + 1) % songs.length;
-      setCurrentSong(songs[forwardIndex]);
+      await setCurrentSong(songs[forwardIndex]);
     } else if (direction === "skip-back") {
       const backIndex = (currentSongIndex - 1) % songs.length;
       if (backIndex === -1) {
-        setCurrentSong(songs[songs.length - 1]);
-        audioPlayer(isPlaying, audioRef);
+        await setCurrentSong(songs[songs.length - 1]);
+        if (isPlaying) audioRef.current.play();
         return;
       }
-      setCurrentSong(songs[backIndex]);
-      audioPlayer(isPlaying, audioRef);
+      await setCurrentSong(songs[backIndex]);
     }
+    if (isPlaying) audioRef.current.play();
   };
 
+  // Track Styles
+  const animatedTrackStyle = {
+    transform: `translateX(${songInfo.animatePercentage}%)`,
+  };
+  const TrackStyle = {
+    background: `linear-gradient(to right,${currentSong.color[0]}, ${currentSong.color[1]})`,
+  };
   return (
     <div className="player-container">
+      {/* TIME CONTROL */}
       <div className="time-control">
         <p>{getTime(songInfo.currentTime)}</p>
-        <input
-          min={0}
-          max={songInfo.duration || 0}
-          value={songInfo.currentTime}
-          onChange={dragHandler}
-          type="range"
-        />
+        <div style={TrackStyle} className="track">
+          <input
+            min={0}
+            max={songInfo.duration || 0}
+            value={songInfo.currentTime}
+            onChange={dragHandler}
+            type="range"
+          />
+          <div style={animatedTrackStyle} className="animated-track"></div>
+        </div>
         <p>{songInfo.duration ? getTime(songInfo.duration) : "0:00"}</p>
       </div>
+
+      {/* PLAYER CONTROL */}
       <div className="play-control">
         <FontAwesomeIcon
           onClick={() => skipHandler("skip-back")}
